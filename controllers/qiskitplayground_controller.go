@@ -219,10 +219,12 @@ func (r *QiskitPlaygroundReconciler) newDeploymentForPlayground(pg *qiskitv1alph
 	} else {
 		resources = &apiv1.ResourceRequirements{
 			Limits: apiv1.ResourceList{
-				"memory": resource.MustParse("5368709120"),
+				"memory": resource.MustParse("2G"),
+				"cpu":    resource.MustParse("2"),
 			},
 			Requests: apiv1.ResourceList{
-				"memory": resource.MustParse("2684354560"),
+				"memory": resource.MustParse("1G"),
+				"cpu":    resource.MustParse("1"),
 			},
 		}
 	}
