@@ -76,7 +76,29 @@ spec:
 ````
 If PVC is not defined, an internal POd disk is used
 
-Finally resource allow to specify resources for the pod
+Finally resource allow to specify resources for the pod, for example:
+````
+apiVersion: "qiskit.ibm.com/v1alpha1"
+kind: QiskitPlayground
+metadata:
+  name: test
+  namespace: jupyter
+spec:
+  image: "jupyter/scipy-notebook:latest"
+  pvc: "claim-admin"
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "250m"
+    limits:
+      memory: "128Mi"
+      cpu: "500m"
+````
 
 To make implementation more reliable, operator is using a deployment with 1 replica,
-which means that if the pod is deleted, it will be bring back by deployment  
+which means that if the pod is deleted, it will be bring back by deployment.
+
+When playground CR is deleted, it will delete all of the associated resources.
+
+Operator works on both `OpenShift` and plain vanila clusters. If running on OpenShift,
+a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playgrond.  
