@@ -44,6 +44,9 @@ spec:
                 description: PullPolicy describes a policy for if/when to pull a container
                   image
                 type: string
+              loadbalancer:
+                default: false
+                type: boolean
               pvc:
                 type: string
               resources:

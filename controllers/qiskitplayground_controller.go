@@ -326,8 +326,13 @@ func (r *QiskitPlaygroundReconciler) newServiceForPlayground(pg *qiskitv1alpha1.
 				},
 			},
 			Selector: *labels,
-			Type:     apiv1.ServiceTypeLoadBalancer,
+			Type:     apiv1.ServiceTypeClusterIP,
 		},
+	}
+
+	if pg.Spec.LoadBalancer && !r.IsOpenShift {
+		// Our environment supports LoadBalancer service type and this is not OpenShift
+		service.Spec.Type = apiv1.ServiceTypeLoadBalancer
 	}
 
 	// SetControllerReference sets owner as a Controller OwnerReference on owned.

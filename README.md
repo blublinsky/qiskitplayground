@@ -47,7 +47,8 @@ The CRD takes the following parameters:
 	Image string `json:"image,omitempty"`
 	ImagePullPolicy apiv1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	PVC string `json:"pvc,omitempty"`
-	Resources *apiv1.ResourceRequirements `json:"resources,omitempty"`
+	LoadBalancer bool `json:"loadbalancer,omitempty" description:"Define if load balancer service type is supported. By default false"`
+  Resources *apiv1.ResourceRequirements `json:"resources,omitempty"`
 
 ````
 The only required parameter is image, for example:
@@ -76,6 +77,24 @@ spec:
 ````
 If PVC is not defined, an internal POd disk is used
 
+Exposing operator UI, depends on where it runs. If running on OpenShift,
+a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playgrond.  
+If it is vanilla kubernetes, by default a [ClusterIP](https://rtfm.co.ua/en/kubernetes-clusterip-vs-nodeport-vs-loadbalancer-services-and-ingress-an-overview-with-examples/) type service is created, and in order to
+expose a service to user, you need to run `port-forward` on this service or define an `Ingress` for it. This works for `MiniKube` or `Kind`
+kubernetes servers. Many of the cloud provider based kubernetes, for example EKS, GKE and Azure support `LoadBalancer` type service. For this type of service, a corresponding load balancer will be created automatically and ingress creation is not required. Defining loadbalancer parameter in the CR will create a loadbalancer service instead of cluster IP
+
+````
+apiVersion: "qiskit.ibm.com/v1alpha1"
+kind: QiskitPlayground
+metadata:
+  name: test
+  namespace: jupyter
+spec:
+  image: "jupyter/scipy-notebook:latest"
+  loadbalancer: true
+
+````
+
 Finally resource allow to specify resources for the pod, for example:
 ````
 apiVersion: "qiskit.ibm.com/v1alpha1"
@@ -99,6 +118,3 @@ To make implementation more reliable, operator is using a deployment with 1 repl
 which means that if the pod is deleted, it will be bring back by deployment.
 
 When playground CR is deleted, it will delete all of the associated resources.
-
-Operator works on both `OpenShift` and plain vanila clusters. If running on OpenShift,
-a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playgrond.  

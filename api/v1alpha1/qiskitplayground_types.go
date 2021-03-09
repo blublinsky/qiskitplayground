@@ -33,6 +33,8 @@ type QiskitPlaygroundSpec struct {
 	ImagePullPolicy apiv1.PullPolicy `json:"imagePullPolicy,omitempty"`
 	// +optional
 	PVC string `json:"pvc,omitempty"`
+	// +kubebuilder:default:=false
+	LoadBalancer bool `json:"loadbalancer,omitempty" description:"Define if load balancer service type is supported. By default false"`
 	// +optional
 	Resources *apiv1.ResourceRequirements `json:"resources,omitempty"`
 }
