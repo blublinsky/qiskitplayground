@@ -31,6 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	routev1 "github.com/openshift/api/route/v1"
+
 	qiskitv1alpha1 "github.io/blublinsky/qiskitplaygrounds/api/v1alpha1"
 	controllers "github.io/blublinsky/qiskitplaygrounds/controllers"
 	// +kubebuilder:scaffold:imports
@@ -97,6 +99,11 @@ func main() {
 	}
 	if err := mgr.AddReadyzCheck("check", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+	// see https://github.com/operator-framework/operator-sdk/blob/c3a77eee021a1cc6a31861a0efd253dc23fbe591/doc/user-guide.md#advanced-topics
+	if err := routev1.AddToScheme(mgr.GetScheme()); err != nil {
+		setupLog.Error(err, "")
 		os.Exit(1)
 	}
 

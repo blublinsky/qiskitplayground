@@ -106,9 +106,12 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Get the qiskit playground to reconcile.
 	var playground qiskitv1alpha1.QiskitPlayground
 	if err := r.Get(ctx, req.NamespacedName, &playground); err != nil {
-		r.Log.Error(err, "Unable to fetch Playground")
+		//r.Log.Error(err, "Unable to fetch Playground")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	r.Log.Info("New reconciliation",
+		"Playground.Namespace", playground.Namespace, "Playground.Name", playground.Name)
 
 	// Support variables
 	var err error
@@ -138,13 +141,13 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 
 		//Deployment created successfully
-		//		return ctrl.Result{}, nil
+		//return ctrl.Result{}, nil
 	} else if err != nil {
 		return ctrl.Result{}, err
 	} else {
 		//Deployment already exists
-		r.Log.Info("Deployment already exists",
-			"Deployment.Namespace", playground.Namespace, "Deployment.Name", playground.Name+"-deployment")
+		//r.Log.Info("Deployment already exists",
+		//"Deployment.Namespace", playground.Namespace, "Deployment.Name", playground.Name+"-deployment")
 
 		//Update status with deployment status
 		if len(deployment.Status.Conditions) > 0 {
@@ -173,13 +176,14 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if err != nil {
 			return ctrl.Result{}, err
 		}
-		//		return ctrl.Result{}, nil
+		// Service created successfully
+		//return ctrl.Result{}, nil
 	} else if err != nil {
 		return ctrl.Result{}, err
-	} else {
+	} /*else {
 		r.Log.Info("Service already exists",
 			"Service.Namespace", playground.Namespace, "Service.Name", playground.Name+"-service")
-	}
+	}*/
 	// If it is OpenShift, create route
 	if r.IsOpenShift {
 		//Check if Route exists
@@ -197,13 +201,17 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			if err != nil {
 				return ctrl.Result{}, err
 			}
+			//r.Log.Info("Route created", "Route.Namespace", playground.Namespace, "Route.Name", playground.Name+"-route")
+
+			// Route created successfully
+			//return ctrl.Result{}, nil
 		} else if err != nil {
 			return ctrl.Result{}, err
-		} else {
+		} /*else {
 
 			// Route already exists - don't requeue
 			r.Log.Info("Route already exists", "Route.Namespace", playground.Namespace, "Route.Name", playground.Name+"-route")
-		}
+		}*/
 	}
 
 	return ctrl.Result{}, nil
@@ -349,6 +357,7 @@ func (r *QiskitPlaygroundReconciler) newServiceForPlayground(pg *qiskitv1alpha1.
 // newRouteForCR returns a service pod with the same name/namespace as the cr
 func (r *QiskitPlaygroundReconciler) newRouteForPLayground(pg *qiskitv1alpha1.QiskitPlayground, labels *map[string]string) (*routev1.Route, error) {
 	// Build route
+	weight := int32(100)
 	rte := &routev1.Route{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Route",
@@ -361,12 +370,14 @@ func (r *QiskitPlaygroundReconciler) newRouteForPLayground(pg *qiskitv1alpha1.Qi
 		},
 		Spec: routev1.RouteSpec{
 			To: routev1.RouteTargetReference{
-				Kind: "Service",
-				Name: pg.Name + "-service",
+				Kind:   "Service",
+				Name:   pg.Name + "-service",
+				Weight: &weight,
 			},
 			Port: &routev1.RoutePort{
-				TargetPort: intstr.FromInt(80),
+				TargetPort: intstr.FromString("http"),
 			},
+			WildcardPolicy: "None",
 		},
 	}
 	// SetControllerReference sets owner as a Controller OwnerReference on owned.
