@@ -119,6 +119,7 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		"app":        "qiskit",
 		"playground": playground.Name,
 	}
+
 	// Get corresponding deployment
 	deployment := &appsv1.Deployment{}
 	err = r.Get(ctx, types.NamespacedName{Name: playground.Name + "-deployment", Namespace: playground.Namespace}, deployment)
