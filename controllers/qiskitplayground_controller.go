@@ -273,7 +273,13 @@ func (r *QiskitPlaygroundReconciler) newDeploymentForPlayground(pg *qiskitv1alph
 									Protocol:      v1.ProtocolTCP,
 								},
 							},
-							Resources:                *resources,
+							Resources: *resources,
+							Env: []v1.EnvVar{
+								{
+									Name:  "JUPYTER_ENABLE_LAB",
+									Value: "yes",
+								},
+							},
 							TerminationMessagePath:   "/dev/termination-log",
 							TerminationMessagePolicy: "File",
 							VolumeMounts:             []v1.VolumeMount{},

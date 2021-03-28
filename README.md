@@ -28,19 +28,25 @@ operator-sdk create api --group qiskit --version v1alpha1 --kind QiskitPlaygroun
 ## Overall approach
 
 Implementation is based on [Jupyter images](https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html)
-A simple DockerFile looks like follows:
+A simple [Dockerfile](image/Dockerfile) looks like follows:
 
 ````
-# Start from JUpiter image
-FROM jupyter/scipy-notebook
+# Start from Jupyter image
+FROM jupyter/scipy-notebook:584e9ab39d22
 # Install Qiskit
 RUN pip install qiskit[visualization]
+# Change permissions on data directory
+RUN chmod -R 777 /home/jovyan
 ````
-With this in place build image with the following command
+Here changing permission is necessary to be able to use this image on OpenShift, which runs the pod as a user defined by project.
+There is a prebuild image `blublinsky1/qiskit:0.1`
+
+With this in place build image with the following command (assuming that you are in the project root directory)
 
 ````
-docker build -t qiskit .
+docker build -t blublinsky1/qiskit:0.1 image
 ````
+
 The CRD takes the following parameters:
 
 ````
@@ -60,7 +66,7 @@ metadata:
   name: test
   namespace: jupyter
 spec:
-  image: "jupyter/scipy-notebook:latest"
+  image: "blublinsky1/qiskit:0.1"
 ````
 If not provided Image pull policy defaults to `IfNotPresent`
 PVC is a PVC which will be used for persistence of notebooks, for example:
@@ -72,7 +78,7 @@ metadata:
   name: test
   namespace: jupyter
 spec:
-  image: "jupyter/scipy-notebook:latest"
+  image: "blublinsky1/qiskit:0.1"
   pvc: "claim-admin"
 ````
 If PVC is not defined, an internal POd disk is used
@@ -90,7 +96,7 @@ metadata:
   name: test
   namespace: jupyter
 spec:
-  image: "jupyter/scipy-notebook:latest"
+  image: "blublinsky1/qiskit:0.1"
   loadbalancer: true
 
 ````
@@ -103,7 +109,7 @@ metadata:
   name: test
   namespace: jupyter
 spec:
-  image: "jupyter/scipy-notebook:latest"
+  image: "blublinsky1/qiskit:0.1"
   pvc: "claim-admin"
   resources:
     requests:
