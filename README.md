@@ -33,12 +33,17 @@ A simple [Dockerfile](image/Dockerfile) looks like follows:
 ````
 # Start from Jupyter image
 FROM jupyter/scipy-notebook:584e9ab39d22
+# Change permissions on data directory (for OpenShift).
+# See https://developers.redhat.com/blog/2020/10/26/adapting-docker-and-kubernetes-containers-to-run-on-red-hat-openshift-container-platform/
+USER root
+RUN chgrp -R 0 /home/jovyan && \
+    chmod -R 777 /home/jovyan
 # Install Qiskit
+USER $NB_UID
 RUN pip install qiskit[visualization]
-# Change permissions on data directory
-RUN chmod -R 777 /home/jovyan
 ````
-Here changing permission is necessary to be able to use this image on OpenShift, which runs the pod as a user defined by project.
+
+Here changing permission is necessary to be able to use this image on OpenShift, [see](https://developers.redhat.com/blog/2020/10/26/adapting-docker-and-kubernetes-containers-to-run-on-red-hat-openshift-container-platform/), which runs the pod as a user defined by project.
 There is a prebuild image `blublinsky1/qiskit:0.1`
 
 With this in place build image with the following command (assuming that you are in the project root directory)
@@ -81,7 +86,7 @@ spec:
   image: "blublinsky1/qiskit:0.1"
   pvc: "claim-admin"
 ````
-If PVC is not defined, an internal POd disk is used
+If PVC is not defined, an internal Pod disk is used
 
 Exposing operator UI, depends on where it runs. If running on OpenShift,
 a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playgrond.  
