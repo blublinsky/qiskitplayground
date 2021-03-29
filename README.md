@@ -73,7 +73,8 @@ metadata:
 spec:
   image: "blublinsky1/qiskit:0.1"
 ````
-If not provided Image pull policy defaults to `IfNotPresent`
+If not provided Image pull policy defaults to `IfNotPresent`. To change it add `imagePullPolicy: "Always"`
+
 PVC is a PVC which will be used for persistence of notebooks, for example:
 
 ````
@@ -86,7 +87,8 @@ spec:
   image: "blublinsky1/qiskit:0.1"
   pvc: "claim-admin"
 ````
-If PVC is not defined, an internal Pod disk is used
+If PVC is not defined, an internal Pod disk is used. Note that without PVC all the notebooks will dissapear after the pod is deleted.
+If a PVC is used, all notebooks are stored there and will survive redeployment.
 
 Exposing operator UI, depends on where it runs. If running on OpenShift,
 a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playgrond.  
