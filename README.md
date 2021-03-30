@@ -131,3 +131,30 @@ To make implementation more reliable, operator is using a deployment with 1 repl
 which means that if the pod is deleted, it will be bring back by deployment.
 
 When playground CR is deleted, it will delete all of the associated resources.
+
+To run operator locally, use the following command:
+````
+make install run
+````
+To build operator use [Dockerfile](Dockerfile). For example
+
+````
+make docker-build docker-push IMG=blublinsky1/qiskitoperator:0.1
+````
+
+With this image in place, you can install operator.
+````
+make deploy IMG=blublinsky1/qiskitoperator:0.1
+````
+By default, a new namespace is created with name <project-name>-system - `qiskit-operator-system` in our case
+To get all resources created by this deployment run:
+
+````
+kubectl get all -n qiskit-operator-system
+````
+You will see that in addition to deployment and pod, a service for metrics will be created:
+
+````
+qiskit-operator-controller-manager-metrics-service   ClusterIP   10.96.240.190   <none>        8443/TCP   6m41s
+````
+
