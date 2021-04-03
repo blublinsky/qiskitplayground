@@ -90,11 +90,15 @@ spec:
 If PVC is not defined, an internal Pod disk is used. Note that without PVC all the notebooks will dissapear after the pod is deleted.
 If a PVC is used, all notebooks are stored there and will survive redeployment.
 
-Exposing operator UI, depends on where it runs. If running on OpenShift,
-a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playgrond.  
+Exposing operator UI, depends on where it runs - plain vanila kubernetes or openshift. Function [`func GetClusterType`](controllers/qiskitplayground_controller.go) is doing this based on
+on discovery client. See this [article](https://developers.redhat.com/blog/2020/01/22/why-not-couple-an-operators-logic-to-a-specific-kubernetes-platform/)
+for details. If you use Fabric8 APIs, the same can be done using code similar to [this](https://github.com/fabric8io/kubernetes-client/blob/master/kubernetes-examples/src/main/java/io/fabric8/kubernetes/examples/CRDExample.java)
+
+If running on OpenShift, a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playground.  
 If it is vanilla kubernetes, by default a [ClusterIP](https://rtfm.co.ua/en/kubernetes-clusterip-vs-nodeport-vs-loadbalancer-services-and-ingress-an-overview-with-examples/) type service is created, and in order to
 expose a service to user, you need to run `port-forward` on this service or define an `Ingress` for it. This works for `MiniKube` or `Kind`
-kubernetes servers. Many of the cloud provider based kubernetes, for example EKS, GKE and Azure support `LoadBalancer` type service. For this type of service, a corresponding load balancer will be created automatically and ingress creation is not required. Defining loadbalancer parameter in the CR will create a loadbalancer service instead of cluster IP
+kubernetes servers. Many of the cloud provider based kubernetes, for example EKS, GKE and Azure support `LoadBalancer` type service. For this type of service, a corresponding load balancer will be created automatically and ingress creation is not required. 
+Defining loadbalancer parameter in the CR will create a loadbalancer service instead of cluster IP
 
 ````
 apiVersion: "qiskit.ibm.com/v1alpha1"
@@ -128,15 +132,15 @@ spec:
 ````
 
 To make implementation more reliable, operator is using a deployment with 1 replica,
-which means that if the pod is deleted, it will be bring back by deployment.
+which means that if the pod is deleted, it will be brought back by deployment.
 
-When playground CR is deleted, it will delete all of the associated resources.
+When playground CR is deleted, it will delete all of the associated resources based on the owner reference.
 
 To run operator locally, use the following command:
 ````
 make install run
 ````
-To build operator use [Dockerfile](Dockerfile). For example
+To build operator's docker file run
 
 ````
 make docker-build docker-push IMG=blublinsky1/qiskitoperator:0.1
