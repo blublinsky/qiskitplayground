@@ -37,6 +37,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"k8s.io/apimachinery/pkg/api/equality"
+
 	routev1 "github.com/openshift/api/route/v1"
 	qiskitv1alpha1 "github.io/blublinsky/qiskitplaygrounds/api/v1alpha1"
 )
@@ -112,8 +114,8 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	r.Log.Info("New reconciliation",
-		"Playground.Namespace", playground.Namespace, "Playground.Name", playground.Name)
+	//r.Log.Info("New reconciliation",
+	//	"Playground.Namespace", playground.Namespace, "Playground.Name", playground.Name)
 
 	// Support variables
 	var err error
@@ -122,20 +124,21 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		"playground": playground.Name,
 	}
 
-	// Get corresponding deployment
+	// Calculate desired deployment
 	deployment := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{Name: playground.Name + "-deployment", Namespace: playground.Namespace}, deployment)
+	deployment, err = r.newDeploymentForPlayground(&playground, &labels)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	// Get current deployment
+	currentdeployment := &appsv1.Deployment{}
+	err = r.Get(ctx, types.NamespacedName{Name: playground.Name + "-deployment", Namespace: playground.Namespace}, currentdeployment)
 
 	// if the Deployment doesn't exist create it
 	if err != nil && errors.IsNotFound(err) {
 		r.Log.Info("Creating a new Deployment",
 			"Deployment.Namespace", playground.Namespace, "Deployment.Name", playground.Name+"-deployment")
-
-		// build deployment resources
-		deployment, err = r.newDeploymentForPlayground(&playground, &labels)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
 
 		// Create it
 		err = r.Create(ctx, deployment)
@@ -143,50 +146,75 @@ func (r *QiskitPlaygroundReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, err
 		}
 
-		//Deployment created successfully
-		//return ctrl.Result{}, nil
 	} else if err != nil {
 		return ctrl.Result{}, err
 	} else {
 		//Deployment already exists
-		//r.Log.Info("Deployment already exists",
-		//"Deployment.Namespace", playground.Namespace, "Deployment.Name", playground.Name+"-deployment")
+		if !equality.Semantic.DeepDerivative(currentdeployment.Spec.Template.Spec.Containers[0].Resources, deployment.Spec.Template.Spec.Containers[0].Resources) ||
+			(currentdeployment.Spec.Template.Spec.Containers[0].Image != deployment.Spec.Template.Spec.Containers[0].Image) ||
+			(currentdeployment.Spec.Template.Spec.Containers[0].ImagePullPolicy != deployment.Spec.Template.Spec.Containers[0].ImagePullPolicy) ||
+			(len(currentdeployment.Spec.Template.Spec.Volumes) != len(deployment.Spec.Template.Spec.Volumes)) {
+			// Current deployment is different from desired. There is no good way of comparing deployment
+			// due to the fact that additional thing inserted during deployment. As a result I am checking parameters that are defined in CRs
+			r.Log.Info("Updating existing Deployment",
+				"Deployment.Namespace", playground.Namespace, "Deployment.Name", playground.Name+"-deployment")
 
-		//Update status with deployment status
-		if len(deployment.Status.Conditions) > 0 {
-			playground.Status.Condition = &deployment.Status.Conditions[0]
-			err = r.Status().Update(context.Background(), &playground)
+			// Update deployment
+			err = r.Update(ctx, deployment)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		} else {
+
+			//Update status with deployment status
+			if len(deployment.Status.Conditions) > 0 {
+				playground.Status.Condition = &deployment.Status.Conditions[0]
+				err = r.Status().Update(context.Background(), &playground)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		}
+	}
+
+	// Calculate desired service
+	service := &apiv1.Service{}
+	service, err = r.newServiceForPlayground(&playground, &labels)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	//check if the service already exists
+	currentservice := &apiv1.Service{}
+	err = r.Get(ctx, types.NamespacedName{Name: playground.Name + "-service", Namespace: playground.Namespace}, currentservice)
+
+	//If the service does not exist, create it
+	if err != nil && errors.IsNotFound(err) {
+		r.Log.Info("Creating a new Service", "Service.Namespace", playground.Namespace, "Service.Name", playground.Name+"-service")
+
+		// Create service
+		err = r.Create(ctx, service)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	} else if err != nil {
+		return ctrl.Result{}, err
+	} else {
+		// Service already exists
+		if !equality.Semantic.DeepDerivative(currentservice.Spec.Type, service.Spec.Type) {
+			r.Log.Info("Updating Service", "Service.Namespace", playground.Namespace, "Service.Name", playground.Name+"-service")
+			// You can't update a service to change service type. So we need to remove existing one and recreate
+			err = r.Delete(ctx, currentservice)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			err = r.Create(ctx, service)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 	}
 
-	//check if the service already exists
-	service := &apiv1.Service{}
-	err = r.Get(ctx, types.NamespacedName{Name: playground.Name + "-service", Namespace: playground.Namespace}, service)
-
-	//If the service does not exist, create it
-	if err != nil && errors.IsNotFound(err) {
-		r.Log.Info("Creating a new Service", "Service.Namespace", playground.Namespace, "Service.Name", playground.Name+"-service")
-		// Create service resource
-		service, err = r.newServiceForPlayground(&playground, &labels)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		// Create service
-		err = r.Create(ctx, service)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
-		// Service created successfully
-		//return ctrl.Result{}, nil
-	} else if err != nil {
-		return ctrl.Result{}, err
-	} /*else {
-		r.Log.Info("Service already exists",
-			"Service.Namespace", playground.Namespace, "Service.Name", playground.Name+"-service")
-	}*/
 	// If it is OpenShift, create route
 	if r.IsOpenShift {
 		//Check if Route exists

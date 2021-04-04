@@ -91,7 +91,7 @@ If PVC is not defined, an internal Pod disk is used. Note that without PVC all t
 If a PVC is used, all notebooks are stored there and will survive redeployment.
 
 Exposing operator UI, depends on where it runs - plain vanila kubernetes or openshift. Function [`func GetClusterType`](controllers/qiskitplayground_controller.go) is doing this based on
-on discovery client. See this [article](https://developers.redhat.com/blog/2020/01/22/why-not-couple-an-operators-logic-to-a-specific-kubernetes-platform/)
+on discovery client. See this [article](https://developers.redhat.com/blog/2020/01/22/why-not-couple-an-operators-logic-to-a-specific-kubernetes-platform/) and also [here](https://developers.redhat.com/blog/2020/09/11/5-tips-for-developing-kubernetes-operators-with-the-new-operator-sdk/)
 for details. If you use Fabric8 APIs, the same can be done using code similar to [this](https://github.com/fabric8io/kubernetes-client/blob/master/kubernetes-examples/src/main/java/io/fabric8/kubernetes/examples/CRDExample.java)
 
 If running on OpenShift, a [route](https://docs.openshift.com/container-platform/4.7/rest_api/network_apis/route-route-openshift-io-v1.html) is created for Playground.  
