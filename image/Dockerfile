@@ -10,12 +10,16 @@ USER $NB_UID
 ## Requirements.txt is a relevant file for the
 ## installation of qiskit components.
 ## Copying inside docker to use them later.
-COPY ./requirements.txt .
+##COPY ./requirements.txt .
 ## version of these is too high
-Run pip uninstall -y torch numba  jupyterlab_server decorator h5py numpy scipy sympy
+## RUN pip uninstall -y torch numba  jupyterlab_server decorator h5py numpy scipy sympy
 ## install required packages
-RUN pip install -U -r requirements.txt --ignore-installed llvmlite \
-    && \
-    pip check
+### Cannot uninstall 'llvmlite'. It is a distutils installed project and thus we cannot
+### accurately determine which files belong to it which would lead to only a partial uninstall.
+## RUN pip install -U -r requirements.txt --ignore-installed llvmlite \
+##    && \
+##    pip check
 
-#RUN pip install qiskit[visualization]
+RUN pip install qiskit[visualization]
+RUN npm i jupyter-vue
+RUN pip install ipyvuetify

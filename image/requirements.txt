@@ -10,6 +10,7 @@ pyscf<1.7.4
 qiskit[all]~=0.25.0
 qiskit-aqua[torch,cvx,pyscf]~=0.9.0
 qiskit-ibmq-provider[visualization]==0.12.2
+ibm_quantum_widgets
 kaleidoscope~=0.0.10
 # for memory extension
 nbresuse
@@ -19,3 +20,4 @@ nbresuse
 torchvision
 json-logging
 ibm-quantum-widgets
+ipyvue
