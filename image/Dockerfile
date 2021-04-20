@@ -21,5 +21,7 @@ USER $NB_UID
 ##    pip check
 
 RUN pip install qiskit[visualization]
-RUN npm i jupyter-vue
+RUN npm install jupyter-vue
 RUN pip install ipyvuetify
+RUN jupyter nbextension enable --py --sys-prefix ipyvue
+RUN jupyter lab build --dev-build=False
