@@ -148,7 +148,7 @@ make docker-build docker-push IMG=qiskit/operator:0.1
 
 With this image in place, you can install operator.
 ````
-make docker-build docker-push IMG=qiskit/operator:0.1
+make deploy IMG=qiskit/operator:0.1
 ````
 By default, a new namespace is created with name <project-name>-system - `qiskit-operator-system` in our case
 To get all resources created by this deployment run:

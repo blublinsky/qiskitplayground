@@ -5,6 +5,17 @@ FROM jupyter/scipy-notebook:584e9ab39d22
 USER root
 RUN chgrp -R 0 /home/jovyan && \
     chmod -R 777 /home/jovyan
-# Install Qiskit
+# Install Qiskit for the right user
 USER $NB_UID
-RUN pip install qiskit[visualization]
+## Requirements.txt is a relevant file for the
+## installation of qiskit components.
+## Copying inside docker to use them later.
+COPY ./requirements.txt .
+## version of these is too high
+Run pip uninstall -y torch numba  jupyterlab_server decorator h5py numpy scipy sympy
+## install required packages
+RUN pip install -U -r requirements.txt --ignore-installed llvmlite \
+    && \
+    pip check
+
+#RUN pip install qiskit[visualization]
